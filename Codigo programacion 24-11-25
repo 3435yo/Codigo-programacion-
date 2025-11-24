@@ -1,0 +1,72 @@
+import json
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Resultado será un Grafo de Calificaciones de Personas
+# Cada Nodo es un promedio de Calificaciones
+# Cada Persona tiene varias Calificaciones
+# Si el promedio es menor que 70, el nodo es rojo
+
+data_json = '''
+{
+  "persons": [
+    {"name": "Javi",    "calificaciones": [60, 70, 80, 65]},
+    {"name": "Gustavo", "calificaciones": [90, 80, 40, 75]},
+    {"name": "Pablo",   "calificaciones": [80, 85, 78, 82]},
+    {"name": "Noemi",   "calificaciones": [95, 100, 98, 90]},
+    {"name": "Paola",   "calificaciones": [70, 72, 68, 74]},
+    {"name": "Jacobo",  "calificaciones": [55, 60, 65, 58]}
+  ]
+}
+'''
+
+# Convertir el string JSON en un diccionario
+data = json.loads(data_json)
+
+# Crear el grafo
+G = nx.Graph()
+
+# Agregar nodos: cada nodo es una persona con su promedio de calificaciones
+for persona in data["persons"]:
+    nombre = persona["name"]
+    califs = persona["calificaciones"]
+    promedio = sum(califs) / len(califs)
+    # Guardamos el promedio como atributo del nodo
+    G.add_node(nombre, promedio=promedio)
+
+# Crear algunas aristas solo para visualizar conexiones (puedes cambiarlas)
+person_names = [p["name"] for p in data["persons"]]
+for i in range(len(person_names) - 1):
+    G.add_edge(person_names[i], person_names[i + 1])
+
+# Definir colores de nodos según el promedio
+colors = []
+labels = {}
+for nodo, attrs in G.nodes(data=True):
+    prom = attrs["promedio"]
+    # Si el promedio es menor que 70, el nodo es rojo
+    if prom < 70:
+        colors.append("red")
+    else:
+        colors.append("lightgreen")
+    # Etiqueta: nombre y promedio
+    labels[nodo] = f"{nodo}\n{prom:.1f}"
+
+# Dibujar el grafo
+plt.figure(figsize=(10, 7))
+pos = nx.spring_layout(G, seed=42)
+
+nx.draw(
+    G,
+    pos,
+    with_labels=False,
+    node_color=colors,
+    node_size=1500,
+    edge_color="gray"
+)
+
+nx.draw_networkx_labels(G, pos, labels=labels, font_size=10, font_weight="bold")
+
+plt.title("Grafo de Promedios de Calificaciones")
+plt.axis("off")
+plt.show()
