@@ -1,0 +1,114 @@
+import matplotlib.pyplot as plt
+
+def iniciar_sistema():
+    print("\n------------------------------------------------")
+    print(">>> SISTEMA DE ANÁLISIS DE PRECIOS")
+    print("------------------------------------------------")
+    print("Instrucciones: Escribe 'listo' en el nombre para terminar.\n")
+
+    inventario = []
+
+    # --- PASO 1: INGRESAR DATOS ---
+    while True:
+        nombre = input("-> Nombre del producto: ")
+        
+        if nombre.lower() == 'listo':
+            break
+        
+        while True:
+            try:
+                precio_str = input(f"   Precio de '{nombre}': ")
+                precio = float(precio_str)
+                break 
+            except ValueError:
+                print("   [!] Error: Ingresa solo números.")
+
+        inventario.append({"nombre": nombre, "precio": precio})
+        print("   --- Guardado ---\n")
+
+    if not inventario:
+        print("\n[!] No hay datos. Cerrando...")
+        input("Enter para salir.")
+        return
+
+    # --- PASO 2: UMBRAL ---
+    print("\n" + "="*40)
+    try:
+        umbral = float(input(">>> Define el umbral máximo (Tu presupuesto): "))
+    except ValueError:
+        umbral = 0.0
+
+    # --- PASO 3: TABLA FILTRADA (SOLO LO QUE ESTÁ POR DEBAJO) ---
+    print("\n" + "="*50)
+    print(f"   PRODUCTOS APROBADOS (Por debajo de ${umbral})")
+    print("="*50)
+    print(f"{'PRODUCTO':<20} | {'PRECIO':<10} | {'DIFERENCIA':<10}")
+    print("-" * 50)
+
+    # Listas para la gráfica
+    nombres_grafica = []
+    precios_grafica = []
+    colores_puntos = []
+    
+    contador_aprobados = 0
+
+    for item in inventario:
+        nom = item['nombre']
+        pre = item['precio']
+        
+        # Guardamos TODO para la gráfica (para ver la comparativa completa)
+        nombres_grafica.append(nom)
+        precios_grafica.append(pre)
+
+        # Lógica de COLORES para la gráfica
+        if pre > umbral:
+            colores_puntos.append('red') 
+        else:
+            colores_puntos.append('green')
+            
+            # --- AQUÍ ESTÁ LA MAGIA DE LA TABLA ---
+            # Solo imprimimos en la terminal si el precio es MENOR o IGUAL al umbral
+            diferencia = umbral - pre
+            print(f"{nom:<20} | ${pre:<9} | -${diferencia:<9} (Ahorro)")
+            contador_aprobados += 1
+
+    print("-" * 50)
+    if contador_aprobados == 0:
+        print("[!] ATENCIÓN: Ningún producto está dentro de tu presupuesto.")
+    else:
+        print(f">>> Se encontraron {contador_aprobados} opciones viables.")
+
+    # --- PASO 4: GENERAR GRÁFICA DE LÍNEAS ---
+    print("\n>>> Generando gráfica visual...")
+    
+    plt.figure(figsize=(10, 6))
+    
+    # Línea conectora
+    plt.plot(nombres_grafica, precios_grafica, color='gray', linestyle='-', linewidth=1, alpha=0.5)
+    
+    # Puntos de color
+    plt.scatter(nombres_grafica, precios_grafica, c=colores_puntos, s=150, zorder=5)
+    
+    # Línea del umbral
+    plt.axhline(y=umbral, color='blue', linestyle='--', label=f'Presupuesto (${umbral})')
+    
+    # Decoración
+    plt.title('Análisis de Mercado: Precios vs Presupuesto')
+    plt.xlabel('Productos')
+    plt.ylabel('Precio ($)')
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.legend()
+
+    # Etiquetas de precio
+    for i in range(len(nombres_grafica)):
+        plt.text(nombres_grafica[i], precios_grafica[i] + (umbral*0.05),
+                 f'${int(precios_grafica[i])}', 
+                 ha='center', fontsize=9)
+
+    plt.show()
+
+    print("\n>>> FIN DEL PROGRAMA")
+    input("Presiona Enter para cerrar...")
+
+if __name__ == "__main__":
+    iniciar_sistema()
