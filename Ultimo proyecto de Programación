@@ -1,0 +1,68 @@
+import requests
+from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def obtener_productos(busqueda):
+    url = f"https://www.amazon.com.mx/s?k={busqueda.replace(' ', '+')}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/120.0.0.0 Safari/537.36"
+    }
+    resp = requests.get(url, headers=headers)
+    soup = BeautifulSoup(resp.text, 'html.parser')
+
+    productos = []
+    for item in soup.find_all('div', {'data-component-type': 's-search-result'}):
+        nombre = item.h2.text.strip() if item.h2 else None
+        precio_span = item.find('span', 'a-offscreen')
+        if nombre and precio_span:
+            try:
+                precio = float(precio_span.text.replace('$', '').replace(',', ''))
+                productos.append({'nombre': nombre[:50], 'precio': precio})
+            except:
+                continue
+        if len(productos) >= 10:
+            break
+    return productos
+
+
+# Buscar productos
+productos = obtener_productos("audífonos")
+
+# Si no se encontraron, usar datos de ejemplo
+if not productos:
+    productos = [
+        {"nombre": "Audífonos Bluetooth", "precio": 899},
+        {"nombre": "Mouse inalámbrico", "precio": 499},
+        {"nombre": "Teclado mecánico", "precio": 1299},
+        {"nombre": "Cargador rápido USB-C", "precio": 299},
+        {"nombre": "Smartwatch deportivo", "precio": 1799},
+        {"nombre": "Powerbank 20000mAh", "precio": 950},
+        {"nombre": "Cable HDMI 4K", "precio": 249},
+        {"nombre": "Laptop HP 15''", "precio": 10999},
+        {"nombre": "Monitor 24''", "precio": 2499},
+        {"nombre": "USB 128GB", "precio": 699},
+    ]
+
+df = pd.DataFrame(productos)
+menores_1000 = df[df['precio'] < 1000]
+
+# Graficar
+plt.figure(figsize=(10, 6))
+x = range(len(df))
+plt.plot(x, df['precio'], marker='o', linestyle='-', color='steelblue', label='Precio total')
+
+# Puntos rojos para los precios menores a 1000
+plt.scatter(menores_1000.index, menores_1000['precio'], color='red', zorder=3, label='Menor a $1000')
+
+plt.xticks(x, df['nombre'], rotation=90)
+plt.ylabel('Precio (MXN)')
+plt.title('Comparativa de precios de productos')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+print("\nProductos con precio menor a $1000:\n")
+print(menores_1000)
